@@ -11,7 +11,7 @@ asyncTest("::parse", 1, function(){
     });
     wd.then(function(result) {
         console.log(result);
-        ok(result["parse"]);
+        ok(result.parse);
         start();
     });
 });
@@ -25,7 +25,7 @@ asyncTest("::query", 1, function(){
     });
     wd.then(function(result) {
         console.log(result);
-        ok(result["query"]);
+        ok(result.query);
         start();
     });
 });
