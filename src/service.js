@@ -1,8 +1,9 @@
-;(function( $, undefined ) {
+(function( $, undefined ) {
 
+    var Service;
     $.rpc = $.rpc || {};
 
-    var Service = $.rpc.Service = function(smd, options){
+    Service = $.rpc.Service = function (smd, options) {
         // summary:
         //		Take a string as a url to retrieve an smd or an object that is an smd or partial smd to use
         //		as a definition for the service
@@ -23,27 +24,30 @@
 
         var url;
         var self = this;
-        function processSmd(smd){
+
+        function processSmd(smd) {
+            var pieces;
             smd._baseUrl = new $.rpc.Url(location.href, url || '.') + "";
             self._smd = smd;
 
             //generate the methods
-            for(var serviceName in self._smd.services){
-                var pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
+            for (var serviceName in self._smd.services) {
+                pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
                 var current = self;
-                for(var i=0; i< pieces.length-1; i++){
+                for (var i = 0; i < pieces.length - 1; i++) {
                     // create or reuse each object as we go down the chain
                     current = current[pieces[i]] || (current[pieces[i]] = {});
                 }
-                current[pieces[pieces.length-1]]=	self._generateService(serviceName, self._smd.services[serviceName]);
+                current[pieces[pieces.length - 1]] = self._generateService(serviceName, self._smd.services[serviceName]);
             }
         }
-        if(smd){
+
+        if (smd) {
             //ifthe arg is a string, we assume it is a url to retrieve an smd definition from
-            if( ($.type(smd) === 'string') || (smd instanceof $.rpc.Url)){
-                if(smd instanceof $.rpc.Url){
+            if (($.type(smd) === 'string') || (smd instanceof $.rpc.Url)) {
+                if (smd instanceof $.rpc.Url) {
                     url = smd + "";
-                }else{
+                } else {
                     url = smd;
                 }
 
@@ -51,13 +55,13 @@
                     url: url,
                     async: false
                 }).done(function (data) {
-                    // SMD format is not strict.
-                    processSmd(eval('(' + data + ')'));
-                }).fail(function(err, textStatus, errorThrown) {
-                    throw errorThrown;
-                });
+                        // SMD format is not strict.
+                        processSmd(eval('(' + data + ')'));
+                    }).fail(function (err, textStatus, errorThrown) {
+                        throw errorThrown;
+                    });
 
-            }else{
+            } else {
                 processSmd(smd);
             }
         }
@@ -91,6 +95,7 @@
             var smd = this._smd;
             var envDef = $.rpc.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
             var parameters = (method.parameters || []).concat(smd.parameters || []);
+            var i, j;
             if(envDef.namedParams){
                 // the serializer is expecting named params
                 if((args.length==1) && $.isPlainObject(args[0])){
@@ -99,7 +104,7 @@
                 }else{
                     // they provided ordered, must convert
                     var data={};
-                    for(var i=0;i<method.parameters.length;i++){
+                    for(i=0;i<method.parameters.length;i++){
                         if(typeof args[i] != "undefined" || !method.parameters[i].optional){
                             data[method.parameters[i].name]=args[i];
                         }
@@ -108,9 +113,10 @@
                 }
                 if(method.strictParameters||smd.strictParameters){
                     //remove any properties that were not defined
+
                     for(i in args){
                         var found=false;
-                        for(var j=0; j<parameters.length;j++){
+                        for(j=0; j<parameters.length;j++){
                             if(parameters[i].name==i){ found=true; }
                         }
                         if(!found){

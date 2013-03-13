@@ -3,7 +3,7 @@
     "title": "jQuery RPC",
     "description": "A jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.",
     "version": "1.0.0pre",
-    "homepage": "http://jqueryrpc.com",
+    "homepage": "https://github.com/torworx/jquery-rpc",
     "author": {
         "name": "Tao Yuan",
         "url": "https://github.com/torworx/jquery-rpc/blob/master/AUTHORS.txt"
@@ -21,14 +21,11 @@
     "dependencies": {},
     "devDependencies": {
         "express": "latest",
-        "grunt": "~0.3.17",
-        "grunt-css": "0.2.0",
-        "grunt-compare-size": "0.1.4",
-        "grunt-html": "0.1.1",
-        "grunt-junit": "0.1.5",
-        "grunt-git-authors": "1.0.0",
-        "rimraf": "2.0.1",
-        "testswarm": "1.0.0-alpha"
+        "grunt": "~0.4.0",
+        "grunt-contrib-uglify": "latest",
+        "grunt-contrib-jshint": "latest",
+        "grunt-contrib-concat": "latest",
+        "grunt-contrib-watch": "latest"
     },
     "keywords": []
 }

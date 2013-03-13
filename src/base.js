@@ -1,4 +1,4 @@
-;(function( $, context ) {
+(function( $, context ) {
 
     $.rpc = $.rpc || {};
 
@@ -84,7 +84,7 @@
                     uriobj = new Url(uri[0]+"");
 
                 if(
-                    relobj.path == "" &&
+                    relobj.path === "" &&
                         !relobj.scheme &&
                         !relobj.authority &&
                         !relobj.query
@@ -113,7 +113,7 @@
                                         segs.splice(j, 1);
                                         j--;
                                     }
-                                }else if(j > 0 && !(j == 1 && segs[0] == "") &&
+                                }else if(j > 0 && !(j == 1 && segs[0] === "") &&
                                     segs[j] == ".." && segs[j-1] != ".."){
                                     // flatten "../" references
                                     if(j == (segs.length - 1)){
@@ -155,7 +155,7 @@
             this.authority = r[4] || (r[3] ? "" : n);
             this.path = r[5]; // can never be undefined
             this.query = r[7] || (r[6] ? "" : n);
-            this.fragment	 = r[9] || (r[8] ? "" : n);
+            this.fragment = r[9] || (r[8] ? "" : n);
 
             if(this.authority != n){
                 // server based naming authority
