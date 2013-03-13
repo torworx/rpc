@@ -9,6 +9,7 @@ module.exports = function(grunt) {
             dist: {
                 src: [
                     'src/base.js',
+                    'src/json.js',
                     'src/service.js',
                     'src/jsonrpc.js'
                 ],

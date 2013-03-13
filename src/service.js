@@ -56,7 +56,7 @@
                     async: false
                 }).done(function (data) {
                         // SMD format is not strict.
-                        processSmd(eval('(' + data + ')'));
+                        processSmd($.rpc.fromJson(data));
                     }).fail(function (err, textStatus, errorThrown) {
                         throw errorThrown;
                     });
@@ -181,12 +181,13 @@
             }
             var request = this._getRequest(method,args);
             var deferred = $.rpc.transportRegistry.match(request.transport).fire(request);
-            var _deferred = $.Deferred();
+            var d = $.Deferred(), success;
 
-            deferred.always(function(results, textStatus){
-                _deferred.resolve(request._envDef.deserialize.call(this, results, (textStatus == "success")));
+            deferred.always(function(results, textStatus, xhrOrError){
+                success = (textStatus == "success");
+                d.resolve(request._envDef.deserialize.call(this, success ? results : xhrOrError, success));
             });
-            return _deferred;
+            return d;
         }
 
     });
@@ -239,12 +240,12 @@
         function(str){ return str == "JSON"; },
         {
             serialize: function(smd, method, data){
-    //                var d = dojo.toJson(data);
+                var d = $.rpc.toJson(data);
 
                 return {
-                    data: data,
+                    data: d,
                     dataType: 'json',
-                    contentType : 'application/json'
+                    contentType : 'application/json; charset=utf-8'
                 };
             },
             deserialize: function(results){

@@ -15,17 +15,21 @@
                     d.jsonrpc = version;
                 }
                 return {
-                    data: d,
+                    data: $.rpc.toJson(d),
                     dataType:'json',
-                    contentType: 'application/json',
+                    contentType: 'application/json; charset=utf-8',
                     transport:"POST"
                 };
             },
 
             deserialize: function(obj, success){
                 if (!success){
+                    if (!obj.responseText) {
+                        return obj;
+                    }
                     obj = $.parseJSON(obj.responseText);
                 }
+
                 if(obj.error) {
                     var e = new Error(obj.error.message || obj.error);
                     e._rpcErrorObject = obj.error;
