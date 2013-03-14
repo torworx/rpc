@@ -181,12 +181,20 @@
             }
             var request = this._getRequest(method,args);
             var deferred = $.rpc.transportRegistry.match(request.transport).fire(request);
-            var d = $.Deferred(), success;
+            var d = $.Deferred(), r;
 
-            deferred.always(function(results, textStatus, xhrOrError){
-                success = (textStatus == "success");
-                d.resolve(request._envDef.deserialize.call(this, success ? results : xhrOrError, success));
-            });
+            deferred
+                .done(function(results){
+                    r = request._envDef.deserialize.call(this, results);
+                    if (r instanceof Error) {
+                        d.resolve(r, null);
+                    } else {
+                        d.resolve(null, r);
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown){
+                    d.resolve(errorThrown, null);
+                });
             return d;
         }
 

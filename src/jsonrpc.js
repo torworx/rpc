@@ -22,14 +22,7 @@
                 };
             },
 
-            deserialize: function(obj, success){
-                if (!success){
-                    if (!obj.responseText) {
-                        return obj;
-                    }
-                    obj = $.parseJSON(obj.responseText);
-                }
-
+            deserialize: function(obj){
                 if(obj.error) {
                     var e = new Error(obj.error.message || obj.error);
                     e._rpcErrorObject = obj.error;

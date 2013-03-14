@@ -9,7 +9,7 @@ asyncTest("::parse", 1, function(){
         action: "parse",
         page: "jQuery"
     });
-    wd.then(function(result) {
+    wd.then(function(err, result) {
         console.log(result);
         ok(result.parse);
         start();
@@ -23,7 +23,7 @@ asyncTest("::query", 1, function(){
         srwhat: "text",
         srsearch: "jQuery"
     });
-    wd.then(function(result) {
+    wd.then(function(err, result) {
         console.log(result);
         ok(result.query);
         start();
