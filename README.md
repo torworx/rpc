@@ -1,4 +1,4 @@
-jQuery RPC
+RPC
 ==========
 
-A jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.
+A Zento/jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.
