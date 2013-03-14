@@ -79,7 +79,7 @@
             var func = $.rpc.hitch(this, "_executeMethod", method);
             var transport = $.rpc.transportRegistry.match(method.transport || this._smd.transport);
             if(transport.getExecutor){
-                func = transport.getExecutor(func,method,this);
+                func = transport.getExecutor(func, method, this);
             }
             var schema = method.returns || (method._schema = {}); // define the schema
             var servicePath = '/' + serviceName +'/';
@@ -288,8 +288,6 @@
             }
         }
     );
-
-
 
     //post is registered first because it is the default;
     $.rpc.transportRegistry.register(
