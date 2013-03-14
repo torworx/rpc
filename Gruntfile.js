@@ -8,10 +8,11 @@ module.exports = function(grunt) {
             },
             dist: {
                 src: [
-                    'src/base.js',
-                    'src/json.js',
-                    'src/service.js',
-                    'src/jsonrpc.js'
+                    'src/rpc.js',
+                    'src/rpc.json.js',
+                    'src/rpc.deferred.js',
+                    'src/rpc.service.js',
+                    'src/rpc.jsonrpc.js'
                 ],
                 dest: 'dist/<%= pkg.name %>.js'
             }

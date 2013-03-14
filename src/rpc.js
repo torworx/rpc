@@ -1,9 +1,9 @@
 (function( $, context ) {
 
-    $.rpc = $.rpc || {};
-
     var arrayPrototype = Array.prototype,
         slice = arrayPrototype.slice;
+    
+    var rpc = {};
 
     var _hitchArgs = function(scope, method){
         var pre = slice.call(arguments, 2);
@@ -18,38 +18,7 @@
         }; // Function
     };
 
-    var hitch = $.rpc.hitch = function(scope, method){
-        // summary:
-        //		Returns a function that will only ever execute in the a given scope.
-        //		This allows for easy use of object member functions
-        //		in callbacks and other places in which the "this" keyword may
-        //		otherwise not reference the expected scope.
-        //		Any number of default positional arguments may be passed as parameters
-        //		beyond "method".
-        //		Each of these values will be used to "placehold" (similar to curry)
-        //		for the hitched function.
-        // scope: Object
-        //		The scope to use when method executes. If method is a string,
-        //		scope is also the object containing method.
-        // method: Function|String...
-        //		A function to be hitched to scope, or the name of the method in
-        //		scope to be hitched.
-        // example:
-        //	|	lang.hitch(foo, "bar")();
-        //		runs foo.bar() in the scope of foo
-        // example:
-        //	|	lang.hitch(foo, myFunction);
-        //		returns a function that runs myFunction in the scope of foo
-        // example:
-        //		Expansion on the default positional arguments passed along from
-        //		hitch. Passed args are mixed first, additional args after.
-        //	|	var foo = { bar: function(a, b, c){ console.log(a, b, c); } };
-        //	|	var fn = lang.hitch(foo, "bar", 1, 2);
-        //	|	fn(3); // logs "1, 2, 3"
-        // example:
-        //	|	var foo = { bar: 2 };
-        //	|	lang.hitch(foo, function(){ this.bar = 10; })();
-        //		execute an anonymous function in scope of foo
+    var hitch = rpc.hitch = function(scope, method){
         if(arguments.length > 2){
             return _hitchArgs.apply(null, arguments); // Function
         }
@@ -69,7 +38,7 @@
         ore = new RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$"),
         ire = new RegExp("^((([^\\[:]+):)?([^@]+)@)?(\\[([^\\]]+)\\]|([^\\[:]*))(:([0-9]+))?$");
 
-    var Url = $.rpc.Url = function(){
+    var Url = rpc.Url = function(){
             var n = null,
                 _a = arguments,
                 uri = [_a[0]];
@@ -169,70 +138,17 @@
         };
     Url.prototype.toString = function(){ return this.uri; };
 
-    var AdapterRegistry = $.rpc.AdapterRegistry = function(/*Boolean?*/ returnWrappers){
-        // summary:
-        //		A registry to make contextual calling/searching easier.
-        // description:
-        //		Objects of this class keep list of arrays in the form [name, check,
-        //		wrap, directReturn] that are used to determine what the contextual
-        //		result of a set of checked arguments is. All check/wrap functions
-        //		in this registry should be of the same arity.
-        // example:
-        //	|	// create a new registry
-        //	|	var reg = new $.AdapterRegistry();
-        //	|	reg.register("handleString",
-        //	|		$.isString,
-        //	|		function(str){
-        //	|			// do something with the string here
-        //	|		}
-        //	|	);
-        //	|	reg.register("handleArr",
-        //	|		$.isArray,
-        //	|		function(arr){
-        //	|			// do something with the array here
-        //	|		}
-        //	|	);
-        //	|
-        //	|	// now we can pass reg.match() *either* an array or a string and
-        //	|	// the value we pass will get handled by the right function
-        //	|	reg.match("someValue"); // will call the first function
-        //	|	reg.match(["someValue"]); // will call the second
-
+    var AdapterRegistry = rpc.AdapterRegistry = function(/*Boolean?*/ returnWrappers){
         this.pairs = [];
         this.returnWrappers = returnWrappers || false; // Boolean
     };
 
     $.extend(AdapterRegistry.prototype, {
         register: function(name, check, wrap, directReturn, override){
-            // summary:
-            //		register a check function to determine if the wrap function or
-            //		object gets selected
-            // name:
-            //		a way to identify this matcher.
-            // check:
-            //		a function that arguments are passed to from the adapter's
-            //		match() function.  The check function should return true if the
-            //		given arguments are appropriate for the wrap function.
-            // directReturn:
-            //		If directReturn is true, the value passed in for wrap will be
-            //		returned instead of being called. Alternately, the
-            //		AdapterRegistry can be set globally to "return not call" using
-            //		the returnWrappers property. Either way, this behavior allows
-            //		the registry to act as a "search" function instead of a
-            //		function interception library.
-            // override:
-            //		If override is given and true, the check function will be given
-            //		highest priority. Otherwise, it will be the lowest priority
-            //		adapter.
             this.pairs[((override) ? "unshift" : "push")]([name, check, wrap, directReturn]);
         },
 
         match: function(/* ... */){
-            // summary:
-            //		Find an adapter for the given arguments. If no suitable adapter
-            //		is found, throws an exception. match() accepts any number of
-            //		arguments, all of which are passed to all matching functions
-            //		from the registered pairs.
             for(var i = 0; i < this.pairs.length; i++){
                 var pair = this.pairs[i];
                 if(pair[1].apply(this, arguments)){
@@ -247,14 +163,6 @@
         },
 
         unregister: function(name){
-            // summary:
-            //		Remove a named adapter from the registry
-            // name: String
-            //		The name of the adapter.
-            // returns: Boolean
-            //		Returns true if operation is successful.
-            //		Returns false if operation fails.
-
             // FIXME: this is kind of a dumb way to handle this. On a large
             // registry this will be slow-ish and we can use the name as a lookup
             // should we choose to trade memory for speed.
@@ -269,4 +177,10 @@
         }
     });
 
-})( jQuery, this );
+    if ($.Deferred) {
+        rpc.Deferred = $.Deferred;
+    }
+
+    $.rpc = rpc;
+
+})( $, window );

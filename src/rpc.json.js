@@ -1,5 +1,6 @@
 (function($) {
     "use strict";
+
     var _JSON,
         hasJSON = typeof JSON != "undefined",
         // Firefox 3.5/Gecko 1.9 fails to use replacer in stringify properly https://bugzilla.mozilla.org/show_bug.cgi?id=509184
@@ -137,4 +138,5 @@
     };
 
     $.extend($.rpc, _JSON);
-})(jQuery);
+
+})($);

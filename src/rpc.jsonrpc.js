@@ -1,4 +1,4 @@
-(function( $, undefined ) {
+(function( $ ) {
 
     function jsonRpcEnvelope(version){
         return {
@@ -47,4 +47,4 @@
         },
         jsonRpcEnvelope("2.0")
     );
-})( jQuery );
+})( $ );

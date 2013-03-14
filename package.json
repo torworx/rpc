@@ -1,7 +1,7 @@
 {
-    "name": "jquery-rpc",
-    "title": "jQuery RPC",
-    "description": "A jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.",
+    "name": "rpc",
+    "title": "Zeptor/jQuery RPC",
+    "description": "A Zeptor/jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.",
     "version": "1.0.0pre",
     "homepage": "https://github.com/torworx/jquery-rpc",
     "author": {

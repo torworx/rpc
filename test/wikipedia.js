@@ -1,13 +1,13 @@
 QUnit.config.testTimeout = 8000;
 
-wikipediaService = new $.rpc.Service("../SMDLibrary/wikipedia.smd");
+wikipediaService = $.rpc.service("../SMDLibrary/wikipedia.smd");
 
 module("Wikipedia");
 
 asyncTest("::parse", 1, function(){
     var wd = wikipediaService.query({
         action: "parse",
-        page: "jQuery"
+        page: "RPC"
     });
     wd.then(function(err, result) {
         console.log(result);
@@ -21,7 +21,7 @@ asyncTest("::query", 1, function(){
         action: "query",
         list: "search",
         srwhat: "text",
-        srsearch: "jQuery"
+        srsearch: "RPC"
     });
     wd.then(function(err, result) {
         console.log(result);

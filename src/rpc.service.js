@@ -1,9 +1,6 @@
 (function( $, undefined ) {
 
-    var Service;
-    $.rpc = $.rpc || {};
-
-    Service = $.rpc.Service = function (smd, options) {
+    var Service = $.rpc.Service = function (smd, options) {
         // summary:
         //		Take a string as a url to retrieve an smd or an object that is an smd or partial smd to use
         //		as a definition for the service
@@ -53,13 +50,15 @@
 
                 $.ajax({
                     url: url,
-                    async: false
-                }).done(function (data) {
+                    async: false,
+                    success: function (data) {
                         // SMD format is not strict.
                         processSmd($.rpc.fromJson(data));
-                    }).fail(function (err, textStatus, errorThrown) {
+                    },
+                    error: function (err, textStatus, errorThrown) {
                         throw errorThrown;
-                    });
+                    }
+                });
 
             } else {
                 processSmd(smd);
@@ -175,27 +174,28 @@
         },
         _executeMethod: function(method){
             var args = [];
-            var i;
-            for(i=1; i< arguments.length; i++){
+
+            for(var i=1; i< arguments.length; i++){
                 args.push(arguments[i]);
             }
-            var request = this._getRequest(method,args);
-            var deferred = $.rpc.transportRegistry.match(request.transport).fire(request);
-            var d = $.Deferred(), r;
+            var request = this._getRequest(method,args),
+                deferred = $.rpc.Deferred();
 
-            deferred
-                .done(function(results){
-                    r = request._envDef.deserialize.call(this, results);
+            $.rpc.transportRegistry.match(request.transport).fire($.extend({}, request, {
+                success: function(results){
+                    var r = request._envDef.deserialize.call(this, results);
                     if (r instanceof Error) {
-                        d.resolve(r, null);
+                        deferred.resolve(r, null);
                     } else {
-                        d.resolve(null, r);
+                        deferred.resolve(null, r);
                     }
-                })
-                .fail(function(jqXHR, textStatus, errorThrown){
-                    d.resolve(errorThrown, null);
-                });
-            return d;
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    deferred.resolve(errorThrown, null);
+                }
+            }));
+
+            return deferred;
         }
 
     });
@@ -332,4 +332,8 @@
     );
     $.rpc.Service._nextId = 1;
 
-})( jQuery );
+    $.rpc.service = function(smd, options) {
+        return new Service(smd, options);
+    };
+
+})( $ );
