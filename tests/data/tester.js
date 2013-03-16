@@ -70,7 +70,7 @@ exports = module.exports = (function() {
 
     Tester.prototype.jsonpEcho = function(req, res) {
         res.setHeader("Content-Type", "application/json");
-        var callback = req.query.testCallbackParam || req.body.testCallbackParam,
+        var callback = req.query.testCallbackParam || req.query.callback, // zeptor not support custom callback name
             message = req.query.message || req.body.message,
             jsonp = !!callback,
             result = '';
