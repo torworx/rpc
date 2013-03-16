@@ -1,0 +1,234 @@
+(window["http://localhost:8999/test/data/test.smd"] || function (val) {
+    return val
+})({
+    transport: "POST",
+    envelope: "URL",
+    strictParameters: false,
+    parameters: {
+        appId: {},
+        outputType: {
+            "default": "json"
+        },
+
+        ignoreErrors: {
+            optional: true
+        }
+    },
+
+    services: {
+        postEcho: {
+            target: "/api/echo",
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        getEcho: {
+            transport: "GET",
+            target: "/api/echo",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+        "namespace.getEcho": {
+            transport: "GET",
+            target: "/api/echo",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+        getEchoJson: {
+            transport: "GET",
+            target: "/api/echoJson",
+            contentType: "application/json",
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+        getPathEcho: {
+            transport: "GET",
+            envelope: "PATH",
+            target: "/api/echo?message=",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+		restStore: {
+			transport: "REST",
+			contentType:"text/plain",
+			preventCache: true,
+			target: "/api/fakestore",
+            parameters: [
+                {name: "location", type: "string", optional: true}
+            ]},
+
+		jsonRestStore: {
+            transport: "REST",
+            target: "fakestore.php",
+            contentType:"application/json",
+            parameters: [
+                {name: "location", type: "string", optional: true}
+            ],
+            returns: {
+                properties:{
+                    name:{
+                        type:"string",
+                        minLength:3
+                    }
+                }
+            }
+        },
+
+        postJsonEcho: {
+            transport: "POST",
+            envelope: "JSON",
+            target: "/api/rawEcho",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        jsonpEcho: {
+            transport: "JSONP",
+            target: "/api/jsonpEcho",
+            callbackParamName: "testCallbackParam",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        postJsonRpc10Echo: {
+            transport: "POST",
+            envelope: "JSON-RPC-1.0",
+            target: "/api/jsonRpc10",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+        postJsonRpc10EchoNamed: {
+            transport: "POST",
+            envelope: "JSON-RPC-1.0",
+            target: "/api/jsonRpc10",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        jsonpJsonRpc12Echo: {
+            transport: "JSONP",
+            envelope: "JSON-RPC-2.0",
+            target: "jsonpJsonRpcEcho.php",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+        jsonpJsonRpc12EchoNamed: {
+            transport: "JSONP",
+            envelope: "JSON-RPC-2.0",
+            target: "jsonpJsonRpcEcho.php",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        postJsonRpc10ForcedError: {
+            envelope: "JSON-RPC-1.0",
+            transport: "POST",
+            target: "/api/jsonRpc10",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+        postJsonRpc12Echo: {
+            transport: "POST",
+            envelope: "JSON-RPC-2.0",
+            target: "/api/jsonRpc12",
+
+            parameters: [{
+                name: "message",
+                type: "string",
+                optional: true
+            }]
+        },
+
+        getJsonRpc12Echo: {
+            transport: "GET",
+            envelope: "JSON-RPC-2.0",
+            target: "jsonRpcPostGetEcho.php",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+        postJsonRpc12EchoNamed: {
+            transport: "POST",
+            envelope: "JSON-RPC-2.0",
+            target: "jsonRpcPostGetEcho.php",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+        getJsonRpc12EchoNamed: {
+            transport: "GET",
+            envelope: "JSON-RPC-2.0",
+            target: "jsonRpcPostGetEcho.php",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        },
+
+
+        postJsonRpc12ForcedError: {
+            envelope: "JSON-RPC-2.0",
+            transport: "POST",
+            target: "/api/jsonRpc12",
+
+            parameters: [{
+                type: "string",
+                optional: true
+            }]
+        }
+    }
+})

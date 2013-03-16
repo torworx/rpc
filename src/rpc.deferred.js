@@ -101,11 +101,11 @@
                 filter = function(target, source, filter) {
                     if (filter) {
                         return target(function() {
-                            return source(filter.apply(null, flatten(arguments)));
+                            return source(filter.apply(null, arguments));
                         });
                     } else {
                         return target(function() {
-                            return source.apply(null, flatten(arguments));
+                            return source.apply(null, arguments);
                         });
                     }
                 };

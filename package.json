@@ -5,27 +5,33 @@
     "version": "0.1.0",
     "homepage": "https://github.com/torworx/rpc",
     "author": {
-        "name": "Tao Yuan",
-        "url": "https://github.com/torworx/rpc/blob/master/AUTHORS.txt"
+        "name": "Tao Yuan"
     },
     "repository": {
         "type": "git",
         "url": "git://github.com/torworx/rpc.git"
     },
-    "licenses": [
-        {
+    "licenses": [{
             "type": "MIT",
             "url": "https://github.com/torworx/rpc/blob/master/MIT-LICENSE.txt"
-        }
-    ],
+    }],
     "dependencies": {},
     "devDependencies": {
+        "connect": "latest",
         "express": "latest",
+        "ejs": "latest",
         "grunt": "~0.4.0",
         "grunt-contrib-uglify": "latest",
         "grunt-contrib-jshint": "latest",
         "grunt-contrib-concat": "latest",
         "grunt-contrib-watch": "latest"
     },
-    "keywords": []
+    "keywords": [
+        "rpc",
+        "jsonrpc",
+        "jsonrpc2",
+        "service",
+        "rest",
+        "ajax"
+    ]
 }

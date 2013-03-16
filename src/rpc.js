@@ -159,7 +159,7 @@
                     }
                 }
             }
-            throw new Error("No match found");
+            throw new Error("No match found for '" + arguments[0] + "'");
         },
 
         unregister: function(name){
@@ -177,10 +177,9 @@
         }
     });
 
-    if ($.Deferred) {
-        rpc.Deferred = $.Deferred;
-    }
+    rpc.async = true;
 
     $.rpc = rpc;
+
 
 })( $, window );

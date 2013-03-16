@@ -157,7 +157,7 @@
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
             return $.extend(request, {
-                sync: $.rpc._sync,
+                async: $.rpc.async,
                 contentType: contentType,
                 headers: method.headers || smd.headers || request.headers || {},
                 target: request.target || $.rpc.getTarget(smd, method),
@@ -309,6 +309,7 @@
             fire: function(r){
                 r.url=  r.target + (r.data ? '?' + ((r.rpcObjectParamName) ? r.rpcObjectParamName + '=' : '') + r.data : '');
                 r.type="GET";
+                r.data = '';
                 return $.ajax(r);
             }
         }
@@ -322,6 +323,7 @@
         {
             fire: function(r){
                 r.url = r.target + ((r.target.indexOf("?") == -1) ? '?' : '&') + ((r.rpcObjectParamName) ? r.rpcObjectParamName + '=' : '') + r.data;
+                r.data = '';
                 r.dataType = "jsonp";
                 r.jsonp = r.callbackParamName || "callback";
                 return $.ajax(r);

@@ -12,6 +12,7 @@ module.exports = function(grunt) {
                     'src/rpc.json.js',
                     'src/rpc.deferred.js',
                     'src/rpc.service.js',
+                    'src/rpc.rest.js',
                     'src/rpc.jsonrpc.js'
                 ],
                 dest: 'dist/<%= pkg.name %>.js'
