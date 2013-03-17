@@ -28,6 +28,9 @@
     },
     "keywords": [
         "rpc",
+        "rpc.js",
+        "jquery",
+        "zepto",
         "jsonrpc",
         "jsonrpc2",
         "service",
