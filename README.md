@@ -17,7 +17,7 @@ All of the provided SMDLibrary SMD's are based on JSONP. If you define your own 
 
 ## Add Scripts and links to your HTML:
 
-```
+```html
 // assuming your /rpc is in js/
 <script src="js/lib/jquery.min.js" type="text/javascript"></script>
 <script src="js/rpc/rpc.min.js" type="text/javascript"></script>
