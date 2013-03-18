@@ -17,7 +17,6 @@
     }],
     "dependencies": {},
     "devDependencies": {
-        "connect": "latest",
         "express": "latest",
         "ejs": "latest",
         "grunt": "~0.4.0",
