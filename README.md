@@ -15,6 +15,28 @@ There are several transports/envelopes that are defined in separate modules to m
 
 All of the provided SMDLibrary SMD's are based on JSONP. If you define your own SMD with a local target endpoint, JSONP is not needed.
 
+## Building rpc.js
+
+rpc.js uses the [grunt](http://github.com/cowboy/grunt) build system. Building rpc.js requires node.js and a command line zip program.
+
+Install grunt.
+
+`npm install grunt -g`
+
+Clone the rpc.js git repo.
+
+`git clone git://github.com/torworx/rpc.git`
+
+`cd rpc`
+
+Install node modules.
+
+`npm install`
+
+Run grunt.
+
+`grunt`
+
 ## Add Scripts and links to your HTML:
 
 ```html
