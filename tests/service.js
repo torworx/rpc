@@ -86,7 +86,7 @@ asyncTest("#3.5 GET,PATH,Named Parameters", 1, function(){
 });
 
 asyncTest("#4.1 GET,URL,Ordered Parameters", 1, function(){
-    //test when given named params
+    //test when given named params                                              j
     service.getEcho(TESTS.message).then(function(err, result) {
         console.log(result);
         equal(result, TESTS.message);
