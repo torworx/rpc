@@ -1,4 +1,4 @@
-(function( $ ) {
+(function(rpc) {
 
     function jsonRpcEnvelope(version){
         return {
@@ -15,7 +15,7 @@
                     d.jsonrpc = version;
                 }
                 return {
-                    data: $.rpc.toJson(d),
+                    data: rpc.toJson(d),
                     dataType:'json',
                     contentType: 'application/json; charset=utf-8',
                     transport:"POST"
@@ -32,19 +32,19 @@
             }
         };
     }
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "JSON-RPC-1.0",
         function(str){
             return str == "JSON-RPC-1.0";
         },
-        $.extend({namedParams:false}, jsonRpcEnvelope()) // 1.0 will only work with ordered params
+        rpc.extend({namedParams:false}, jsonRpcEnvelope()) // 1.0 will only work with ordered params
     );
 
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "JSON-RPC-2.0",
         function(str){
             return str == "JSON-RPC-2.0";
         },
         jsonRpcEnvelope("2.0")
     );
-})( $ );
+})(rpc);

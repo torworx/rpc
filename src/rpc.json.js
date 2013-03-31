@@ -1,4 +1,4 @@
-(function($) {
+(function(rpc) {
     "use strict";
 
     var _JSON,
@@ -137,6 +137,6 @@
         }, prettyPrint && toJsonIndentStr);	// String
     };
 
-    $.extend($.rpc, _JSON);
+    rpc.extend(rpc, _JSON);
 
-})($);
+})(rpc);

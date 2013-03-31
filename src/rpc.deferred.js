@@ -7,7 +7,7 @@
  */
 
 
-(function($) {
+(function(rpc) {
     var Deferred, PENDING, REJECTED, RESOLVED, after, execute, flatten, has, isArguments, wrap, _when,
         __slice = [].slice;
 
@@ -171,9 +171,9 @@
         return trigger.promise();
     };
 
-    $.rpc.Deferred = function() {
+    rpc.defer = function() {
         return new Deferred();
     };
-    $.rpc.Deferred.when = _when;
+    rpc.defer.when = _when;
 
-})($);
+})(rpc);

@@ -1,25 +1,25 @@
-(function($) {
+(function(rpc) {
 // Note: This doesn't require dojox.rpc.Service, and if you want it you must require it
 // yourself, and you must load it prior to dojox.rpc.Rest.
 
 //    dojo.getObject("rpc.Rest", true, dojox);
 
-    if ($.rpc && $.rpc.transportRegistry) {
+    if (rpc && rpc.transportRegistry) {
         // register it as an RPC service if the registry is available
-        $.rpc.transportRegistry.register(
+        rpc.transportRegistry.register(
             "REST",
             function (str) {
                 return str == "REST";
             },
             {
                 getExecutor: function (func, method, svc) {
-                    return new $.rpc.Rest(
+                    return new rpc.Rest(
                         method.name,
                         (method.contentType || svc._smd.contentType || "").match(/json|javascript/), // isJson
                         null,
                         function (id, args) {
                             var request = svc._getRequest(method, []);
-                            request.url = request.target + (id ? '?' + $.param(id) : '');
+                            request.url = request.target + (id ? '?' + rpc.param(id) : '');
                             if (args && (args.start >= 0 || args.count >= 0)) {
                                 request.headers = request.headers || {};
                                 request.headers.Range = "items=" + (args.start || '0') + '-' +
@@ -36,7 +36,7 @@
     var drr;
 
     function index(method, request, service, range, id) {
-        var d = $.rpc.Deferred(),
+        var d = rpc.defer(),
             o = {
                 type: method,
                 success: function(data, textStatus, jqXHR) {
@@ -51,11 +51,11 @@
                     d.resolve(errorThrown, null);
                 }
             };
-        $.ajax($.extend(o, request));
+        rpc.ajax(rpc.extend(o, request));
         return d;
     }
 
-    drr = $.rpc.Rest = function (/*String*/path, /*Boolean?*/isJson, /*Object?*/schema, /*Function?*/getRequest) {
+    drr = rpc.Rest = function (/*String*/path, /*Boolean?*/isJson, /*Object?*/schema, /*Function?*/getRequest) {
         // summary:
         //		This provides a HTTP REST service with full range REST verbs include PUT,POST, and DELETE.
         // description:
@@ -86,14 +86,14 @@
         //		This can be overriden to take advantage of more complex referencing/indexing
         //		schemes
         service.cache = {
-            serialize: isJson ? $.rpc.toJson : function (result) {
+            serialize: isJson ? rpc.toJson : function (result) {
                 return result;
             }
         };
         // the default XHR args creator:
         service._getRequest = getRequest || function (id, args) {
-            if ($.isPlainObject(id)) {
-                id = $.param(id);
+            if (rpc.isPlainObject(id)) {
+                id = rpc.param(id);
                 id = id ? "?" + id : "";
             }
             if (args && args.sort && !args.queryStr) {
@@ -108,7 +108,7 @@
                 url: path + (id === null ? "" : id),
                 dataType: isJson ? 'json' : 'text',
                 contentType: isJson ? 'application/json' : 'text/plain',
-                async: $.rpc.async,
+                async: rpc.async,
                 headers: {
                     Accept: isJson ? 'application/json,application/javascript' : '*/*'
                 }
@@ -118,7 +118,7 @@
                     (("count" in args && args.count != Infinity) ?
                         (args.count + (args.start || 0) - 1) : '');
             }
-//            $.rpc.async = true;
+//            rpc.async = true;
             return request;
         };
         // each calls the event handler
@@ -153,4 +153,4 @@
     };
 
     return drr;
-})($);
+})(rpc);

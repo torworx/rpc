@@ -1,160 +1,297 @@
-(function( $, context ) {
+(function (root) {
 
-    var arrayPrototype = Array.prototype,
-        slice = arrayPrototype.slice;
-    
-    var rpc = {};
+    var _rpc = root.rpc,
+        arrayPrototype = Array.prototype,
+        slice = arrayPrototype.slice,
+        class2type = {},
+        core_toString = class2type.toString,
+        core_hasOwn = class2type.hasOwnProperty,
+        rpc = function(smd, options){
+            return new rpc.Service(smd, options);
+        };
 
-    var _hitchArgs = function(scope, method){
+    function isWindow(obj) {
+        return obj !== null && obj == obj.window;
+    }
+
+    function isObject(obj) {
+        return type(obj) == "object";
+    }
+
+
+    function isPlainObject(obj) {
+        // Must be an Object.
+        // Because of IE, we also have to check the presence of the constructor property.
+        // Make sure that DOM nodes and window objects don't pass through, as well
+        if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
+            return false;
+        }
+
+        try {
+            // Not own constructor property must be Object
+            if (obj.constructor && !core_hasOwn.call(obj, "constructor") && !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+                return false;
+            }
+        } catch (e) {
+            // IE8,9 Will throw exceptions on certain host objects #9897
+            return false;
+        }
+
+        // Own properties are enumerated firstly, so to speed up,
+        // if last one is own, then all properties are own.
+
+        var key;
+        for (key in obj) {
+        }
+
+        return key === undefined || core_hasOwn.call(obj, key);
+    }
+
+    function isArray(value) {
+        return value instanceof Array;
+    }
+
+    function likeArray(obj) {
+        return typeof obj.length == 'number';
+    }
+
+    rpc.type = type;
+    rpc.isPlainObject = isPlainObject;
+    rpc.isWindow = isWindow;
+    rpc.isObject = isObject;
+    rpc.isArray = isArray;
+
+    rpc.each = function (elements, callback) {
+        var i, key;
+        if (likeArray(elements)) {
+            for (i = 0; i < elements.length; i++)
+                if (callback.call(elements[i], i, elements[i]) === false) return elements;
+        } else {
+            for (key in elements)
+                if (callback.call(elements[key], key, elements[key]) === false) return elements;
+        }
+
+        return elements;
+    };
+
+    // Populate the class2type map
+    rpc.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function (i, name) {
+        class2type[ "[object " + name + "]" ] = name.toLowerCase();
+    });
+
+    function type(obj) {
+        return obj === null ? String(obj) :
+            class2type[core_toString.call(obj)] || "object";
+    }
+
+    function extend(target, source, deep) {
+        for (var key in source)
+            if (deep && (isPlainObject(source[key]) || isArray(source[key]))) {
+                if (isPlainObject(source[key]) && !isPlainObject(target[key]))
+                    target[key] = {};
+                if (isArray(source[key]) && !isArray(target[key]))
+                    target[key] = [];
+                extend(target[key], source[key], deep);
+            }
+            else if (source[key] !== undefined) target[key] = source[key];
+    }
+
+    // Copy all but undefined properties from one or more
+    // objects to the `target` object.
+    rpc.extend = function (target) {
+        var deep, args = slice.call(arguments, 1);
+        if (typeof target == 'boolean') {
+            deep = target;
+            target = args.shift();
+        }
+        args.forEach(function (arg) {
+            extend(target, arg, deep);
+        });
+        return target;
+    };
+
+    var escape = encodeURIComponent;
+
+    function serialize(params, obj, traditional, scope) {
+        var type, array = $.isArray(obj);
+        rpc.each(obj, function (key, value) {
+            type = rpc.type(value);
+            if (scope) key = traditional ? scope : scope + '[' + (array ? '' : key) + ']';
+            // handle data in serializeArray() format
+            if (!scope && array) params.add(value.name, value.value);
+            // recurse into nested objects
+            else if (type == "array" || (!traditional && type == "object"))
+                serialize(params, value, traditional, key);
+            else params.add(key, value);
+        });
+    }
+
+    rpc.param = function (obj, traditional) {
+        var params = [];
+        params.add = function (k, v) {
+            this.push(escape(k) + '=' + escape(v));
+        };
+        serialize(params, obj, traditional);
+        return params.join('&').replace(/%20/g, '+');
+    };
+
+    var _hitchArgs = function (scope, method) {
         var pre = slice.call(arguments, 2);
-        var named = ($.type(method) === 'string');
-        return function(){
+        var named = (type(method) === 'string');
+        return function () {
             // arrayify arguments
             var args = slice.call(arguments);
             // locate our method
-            var f = named ? (scope || context)[method] : method;
+            var f = named ? (scope || root)[method] : method;
             // invoke with collected args
             return f && f.apply(scope || this, pre.concat(args)); // mixed
         }; // Function
     };
 
-    var hitch = rpc.hitch = function(scope, method){
-        if(arguments.length > 2){
+    var hitch = rpc.hitch = function (scope, method) {
+        if (arguments.length > 2) {
             return _hitchArgs.apply(null, arguments); // Function
         }
-        if(!method){
+        if (!method) {
             method = scope;
             scope = null;
         }
-        if($.type(method) === 'string'){
-            scope = scope || context;
-            if(!scope[method]){ throw(['hitch: scope["', method, '"] is null (scope="', scope, '")'].join('')); }
-            return function(){ return scope[method].apply(scope, arguments || []); }; // Function
+        if (type(method) === 'string') {
+            scope = scope || root;
+            if (!scope[method]) {
+                throw(['hitch: scope["', method, '"] is null (scope="', scope, '")'].join(''));
+            }
+            return function () {
+                return scope[method].apply(scope, arguments || []);
+            }; // Function
         }
-        return !scope ? method : function(){ return method.apply(scope, arguments || []); }; // Function
+        return !scope ? method : function () {
+            return method.apply(scope, arguments || []);
+        }; // Function
     };
 
     var
         ore = new RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$"),
         ire = new RegExp("^((([^\\[:]+):)?([^@]+)@)?(\\[([^\\]]+)\\]|([^\\[:]*))(:([0-9]+))?$");
 
-    var Url = rpc.Url = function(){
-            var n = null,
-                _a = arguments,
-                uri = [_a[0]];
-            // resolve uri components relative to each other
-            for(var i = 1; i<_a.length; i++){
-                if(!_a[i]){ continue; }
+    var Url = rpc.Url = function () {
+        var n = null,
+            _a = arguments,
+            uri = [_a[0]];
+        // resolve uri components relative to each other
+        for (var i = 1; i < _a.length; i++) {
+            if (!_a[i]) {
+                continue;
+            }
 
-                // Safari doesn't support this.constructor so we have to be explicit
-                // FIXME: Tracked (and fixed) in Webkit bug 3537.
-                //		http://bugs.webkit.org/show_bug.cgi?id=3537
-                var relobj = new Url(_a[i]+""),
-                    uriobj = new Url(uri[0]+"");
+            // Safari doesn't support this.constructor so we have to be explicit
+            // FIXME: Tracked (and fixed) in Webkit bug 3537.
+            //		http://bugs.webkit.org/show_bug.cgi?id=3537
+            var relobj = new Url(_a[i] + ""),
+                uriobj = new Url(uri[0] + "");
 
-                if(
-                    relobj.path === "" &&
-                        !relobj.scheme &&
-                        !relobj.authority &&
-                        !relobj.query
-                    ){
-                    if(relobj.fragment != n){
-                        uriobj.fragment = relobj.fragment;
-                    }
-                    relobj = uriobj;
-                }else if(!relobj.scheme){
-                    relobj.scheme = uriobj.scheme;
+            if (
+                relobj.path === "" && !relobj.scheme && !relobj.authority && !relobj.query
+                ) {
+                if (relobj.fragment != n) {
+                    uriobj.fragment = relobj.fragment;
+                }
+                relobj = uriobj;
+            } else if (!relobj.scheme) {
+                relobj.scheme = uriobj.scheme;
 
-                    if(!relobj.authority){
-                        relobj.authority = uriobj.authority;
+                if (!relobj.authority) {
+                    relobj.authority = uriobj.authority;
 
-                        if(relobj.path.charAt(0) != "/"){
-                            var path = uriobj.path.substring(0,
-                                uriobj.path.lastIndexOf("/") + 1) + relobj.path;
+                    if (relobj.path.charAt(0) != "/") {
+                        var path = uriobj.path.substring(0,
+                            uriobj.path.lastIndexOf("/") + 1) + relobj.path;
 
-                            var segs = path.split("/");
-                            for(var j = 0; j < segs.length; j++){
-                                if(segs[j] == "."){
-                                    // flatten "./" references
-                                    if(j == segs.length - 1){
-                                        segs[j] = "";
-                                    }else{
-                                        segs.splice(j, 1);
-                                        j--;
-                                    }
-                                }else if(j > 0 && !(j == 1 && segs[0] === "") &&
-                                    segs[j] == ".." && segs[j-1] != ".."){
-                                    // flatten "../" references
-                                    if(j == (segs.length - 1)){
-                                        segs.splice(j, 1);
-                                        segs[j - 1] = "";
-                                    }else{
-                                        segs.splice(j - 1, 2);
-                                        j -= 2;
-                                    }
+                        var segs = path.split("/");
+                        for (var j = 0; j < segs.length; j++) {
+                            if (segs[j] == ".") {
+                                // flatten "./" references
+                                if (j == segs.length - 1) {
+                                    segs[j] = "";
+                                } else {
+                                    segs.splice(j, 1);
+                                    j--;
+                                }
+                            } else if (j > 0 && !(j == 1 && segs[0] === "") &&
+                                segs[j] == ".." && segs[j - 1] != "..") {
+                                // flatten "../" references
+                                if (j == (segs.length - 1)) {
+                                    segs.splice(j, 1);
+                                    segs[j - 1] = "";
+                                } else {
+                                    segs.splice(j - 1, 2);
+                                    j -= 2;
                                 }
                             }
-                            relobj.path = segs.join("/");
                         }
+                        relobj.path = segs.join("/");
                     }
                 }
-
-                uri = [];
-                if(relobj.scheme){
-                    uri.push(relobj.scheme, ":");
-                }
-                if(relobj.authority){
-                    uri.push("//", relobj.authority);
-                }
-                uri.push(relobj.path);
-                if(relobj.query){
-                    uri.push("?", relobj.query);
-                }
-                if(relobj.fragment){
-                    uri.push("#", relobj.fragment);
-                }
             }
 
-            this.uri = uri.join("");
-
-            // break the uri into its main components
-            var r = this.uri.match(ore);
-
-            this.scheme = r[2] || (r[1] ? "" : n);
-            this.authority = r[4] || (r[3] ? "" : n);
-            this.path = r[5]; // can never be undefined
-            this.query = r[7] || (r[6] ? "" : n);
-            this.fragment = r[9] || (r[8] ? "" : n);
-
-            if(this.authority != n){
-                // server based naming authority
-                r = this.authority.match(ire);
-
-                this.user = r[3] || n;
-                this.password = r[4] || n;
-                this.host = r[6] || r[7]; // ipv6 || ipv4
-                this.port = r[9] || n;
+            uri = [];
+            if (relobj.scheme) {
+                uri.push(relobj.scheme, ":");
             }
-        };
-    Url.prototype.toString = function(){ return this.uri; };
+            if (relobj.authority) {
+                uri.push("//", relobj.authority);
+            }
+            uri.push(relobj.path);
+            if (relobj.query) {
+                uri.push("?", relobj.query);
+            }
+            if (relobj.fragment) {
+                uri.push("#", relobj.fragment);
+            }
+        }
 
-    var AdapterRegistry = rpc.AdapterRegistry = function(/*Boolean?*/ returnWrappers){
+        this.uri = uri.join("");
+
+        // break the uri into its main components
+        var r = this.uri.match(ore);
+
+        this.scheme = r[2] || (r[1] ? "" : n);
+        this.authority = r[4] || (r[3] ? "" : n);
+        this.path = r[5]; // can never be undefined
+        this.query = r[7] || (r[6] ? "" : n);
+        this.fragment = r[9] || (r[8] ? "" : n);
+
+        if (this.authority != n) {
+            // server based naming authority
+            r = this.authority.match(ire);
+
+            this.user = r[3] || n;
+            this.password = r[4] || n;
+            this.host = r[6] || r[7]; // ipv6 || ipv4
+            this.port = r[9] || n;
+        }
+    };
+    Url.prototype.toString = function () {
+        return this.uri;
+    };
+
+    var AdapterRegistry = rpc.AdapterRegistry = function (/*Boolean?*/ returnWrappers) {
         this.pairs = [];
         this.returnWrappers = returnWrappers || false; // Boolean
     };
 
-    $.extend(AdapterRegistry.prototype, {
-        register: function(name, check, wrap, directReturn, override){
+    rpc.extend(AdapterRegistry.prototype, {
+        register: function (name, check, wrap, directReturn, override) {
             this.pairs[((override) ? "unshift" : "push")]([name, check, wrap, directReturn]);
         },
 
-        match: function(/* ... */){
-            for(var i = 0; i < this.pairs.length; i++){
+        match: function (/* ... */) {
+            for (var i = 0; i < this.pairs.length; i++) {
                 var pair = this.pairs[i];
-                if(pair[1].apply(this, arguments)){
-                    if((pair[3])||(this.returnWrappers)){
+                if (pair[1].apply(this, arguments)) {
+                    if ((pair[3]) || (this.returnWrappers)) {
                         return pair[2];
-                    }else{
+                    } else {
                         return pair[2].apply(this, arguments);
                     }
                 }
@@ -162,13 +299,13 @@
             throw new Error("No match found for '" + arguments[0] + "'");
         },
 
-        unregister: function(name){
+        unregister: function (name) {
             // FIXME: this is kind of a dumb way to handle this. On a large
             // registry this will be slow-ish and we can use the name as a lookup
             // should we choose to trade memory for speed.
-            for(var i = 0; i < this.pairs.length; i++){
+            for (var i = 0; i < this.pairs.length; i++) {
                 var pair = this.pairs[i];
-                if(pair[0] == name){
+                if (pair[0] == name) {
                     this.pairs.splice(i, 1);
                     return true;
                 }
@@ -179,11 +316,31 @@
 
     rpc.async = true;
 
-    $.rpc = rpc;
+    rpc.noConflict = function () {
 
+        if (root.rpc === rpc) {
+            root.rpc = _rpc;
+        }
 
-})( $, window );
-(function($) {
+        return rpc;
+    };
+
+    rpc.ajax = function () {
+        alert("No adapter has been installed.");
+    };
+
+    rpc.installInto = function(fw, noConflict) {
+        fw.rpc = rpc;
+        rpc.ajax = fw.ajax;
+        if (noConflict) {
+           rpc.noConflict();
+        }
+    };
+
+    root.rpc = rpc;
+
+})(window);
+(function(rpc) {
     "use strict";
 
     var _JSON,
@@ -322,9 +479,9 @@
         }, prettyPrint && toJsonIndentStr);	// String
     };
 
-    $.extend($.rpc, _JSON);
+    rpc.extend(rpc, _JSON);
 
-})($);
+})(rpc);
 
 // Generated by CoffeeScript 1.3.1
 
@@ -335,7 +492,7 @@
  */
 
 
-(function($) {
+(function(rpc) {
     var Deferred, PENDING, REJECTED, RESOLVED, after, execute, flatten, has, isArguments, wrap, _when,
         __slice = [].slice;
 
@@ -499,39 +656,22 @@
         return trigger.promise();
     };
 
-    $.rpc.Deferred = function() {
+    rpc.defer = function() {
         return new Deferred();
     };
-    $.rpc.Deferred.when = _when;
+    rpc.defer.when = _when;
 
-})($);
-(function( $, undefined ) {
+})(rpc);
+(function (rpc) {
 
-    var Service = $.rpc.Service = function (smd, options) {
-        // summary:
-        //		Take a string as a url to retrieve an smd or an object that is an smd or partial smd to use
-        //		as a definition for the service
-        // description:
-        //		$.rpc.Service must be loaded prior to any plugin services like $.rpc.Rest
-        //		$.rpc.JsonRpc in order for them to register themselves, otherwise you get
-        //		a "No match found" error.
-        // smd: object
-        //		Takes a number of properties as kwArgs for defining the service.  It also
-        //		accepts a string.  When passed a string, it is treated as a url from
-        //		which it should synchronously retrieve an smd file.  Otherwise it is a kwArgs
-        //		object.  It accepts serviceUrl, to manually define a url for the rpc service
-        //		allowing the rpc system to be used without an smd definition. strictArgChecks
-        //		forces the system to verify that the # of arguments provided in a call
-        //		matches those defined in the smd.  smdString allows a developer to pass
-        //		a jsonString directly, which will be converted into an object or alternatively
-        //		smdObject is accepts an smdObject directly.
+    var Service = rpc.Service = function (smd, options) {
 
         var url;
         var self = this;
 
         function processSmd(smd) {
             var pieces;
-            smd._baseUrl = new $.rpc.Url(location.href, url || '.') + "";
+            smd._baseUrl = new rpc.Url(location.href, url || '.') + "";
             self._smd = smd;
 
             //generate the methods
@@ -548,19 +688,19 @@
 
         if (smd) {
             //ifthe arg is a string, we assume it is a url to retrieve an smd definition from
-            if (($.type(smd) === 'string') || (smd instanceof $.rpc.Url)) {
-                if (smd instanceof $.rpc.Url) {
+            if ((rpc.type(smd) === 'string') || (smd instanceof rpc.Url)) {
+                if (smd instanceof rpc.Url) {
                     url = smd + "";
                 } else {
                     url = smd;
                 }
 
-                $.ajax({
+                rpc.ajax({
                     url: url,
                     async: false,
                     success: function (data) {
                         // SMD format is not strict.
-                        processSmd($.rpc.fromJson(data));
+                        processSmd(rpc.fromJson(data));
                     },
                     error: function (err, textStatus, errorThrown) {
                         throw errorThrown;
@@ -576,85 +716,87 @@
         this._requestId = 0;
     };
 
-    $.extend(Service.prototype, {
+    rpc.extend(Service.prototype, {
 
-        _generateService: function(serviceName, method){
-            if(this[method]){
-                throw new Error("WARNING: "+ serviceName+ " already exists for service. Unable to generate function");
+        _generateService: function (serviceName, method) {
+            if (this[method]) {
+                throw new Error("WARNING: " + serviceName + " already exists for service. Unable to generate function");
             }
             method.name = serviceName;
-            var func = $.rpc.hitch(this, "_executeMethod", method);
-            var transport = $.rpc.transportRegistry.match(method.transport || this._smd.transport);
-            if(transport.getExecutor){
+            var func = rpc.hitch(this, "_executeMethod", method);
+            var transport = rpc.transportRegistry.match(method.transport || this._smd.transport);
+            if (transport.getExecutor) {
                 func = transport.getExecutor(func, method, this);
             }
             var schema = method.returns || (method._schema = {}); // define the schema
-            var servicePath = '/' + serviceName +'/';
+            var servicePath = '/' + serviceName + '/';
             // schemas are minimally used to track the id prefixes for the different services
             schema._service = func;
             func.servicePath = servicePath;
             func._schema = schema;
-            func.id = $.rpc.Service._nextId++;
+            func.id = rpc.Service._nextId++;
             return func;
         },
-        _getRequest: function(method,args){
+        _getRequest: function (method, args) {
             var smd = this._smd;
-            var envDef = $.rpc.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
+            var envDef = rpc.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
             var parameters = (method.parameters || []).concat(smd.parameters || []);
             var i, j;
-            if(envDef.namedParams){
+            if (envDef.namedParams) {
                 // the serializer is expecting named params
-                if((args.length==1) && $.isPlainObject(args[0])){
+                if ((args.length == 1) && rpc.isPlainObject(args[0])) {
                     // looks like we have what we want
                     args = args[0];
-                }else{
+                } else {
                     // they provided ordered, must convert
-                    var data={};
-                    for(i=0;i<method.parameters.length;i++){
-                        if(typeof args[i] != "undefined" || !method.parameters[i].optional){
-                            data[method.parameters[i].name]=args[i];
+                    var data = {};
+                    for (i = 0; i < method.parameters.length; i++) {
+                        if (typeof args[i] != "undefined" || !method.parameters[i].optional) {
+                            data[method.parameters[i].name] = args[i];
                         }
                     }
                     args = data;
                 }
-                if(method.strictParameters||smd.strictParameters){
+                if (method.strictParameters || smd.strictParameters) {
                     //remove any properties that were not defined
 
-                    for(i in args){
-                        var found=false;
-                        for(j=0; j<parameters.length;j++){
-                            if(parameters[i].name==i){ found=true; }
+                    for (i in args) {
+                        var found = false;
+                        for (j = 0; j < parameters.length; j++) {
+                            if (parameters[i].name == i) {
+                                found = true;
+                            }
                         }
-                        if(!found){
+                        if (!found) {
                             delete args[i];
                         }
                     }
 
                 }
                 // setting default values
-                for(i=0; i< parameters.length; i++){
+                for (i = 0; i < parameters.length; i++) {
                     var param = parameters[i];
-                    if(!param.optional && param.name && !args[param.name]){
-                        if(param["default"]){
+                    if (!param.optional && param.name && !args[param.name]) {
+                        if (param["default"]) {
                             args[param.name] = param["default"];
-                        }else if(!(param.name in args)){
+                        } else if (!(param.name in args)) {
                             throw new Error("Required parameter " + param.name + " was omitted");
                         }
                     }
                 }
-            }else if(parameters && parameters[0] && parameters[0].name && (args.length==1) && $.isPlainObject(args[0])){
+            } else if (parameters && parameters[0] && parameters[0].name && (args.length == 1) && rpc.isPlainObject(args[0])) {
                 // looks like named params, we will convert
-                if(envDef.namedParams === false){
+                if (envDef.namedParams === false) {
                     // the serializer is expecting ordered params, must be ordered
-                    args = $.rpc.toOrdered(parameters, args);
-                }else{
+                    args = rpc.toOrdered(parameters, args);
+                } else {
                     // named is ok
                     args = args[0];
                 }
             }
 
-            if($.isPlainObject(this._options)){
-                args = $.extend(args, this._options);
+            if (rpc.isPlainObject(this._options)) {
+                args = rpc.extend(args, this._options);
             }
 
             var schema = method._schema || method.returns; // serialize with the right schema for the context;
@@ -663,11 +805,11 @@
             var contentType = (method.contentType || smd.contentType || request.contentType);
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
-            return $.extend(request, {
-                async: $.rpc.async,
+            return rpc.extend(request, {
+                async: rpc.async,
                 contentType: contentType,
                 headers: method.headers || smd.headers || request.headers || {},
-                target: request.target || $.rpc.getTarget(smd, method),
+                target: request.target || rpc.getTarget(smd, method),
                 transport: method.transport || smd.transport || request.transport,
                 envelope: method.envelope || smd.envelope || request.envelope,
                 timeout: method.timeout || smd.timeout,
@@ -679,17 +821,17 @@
                 frameDoc: this._options.frameDoc || undefined
             });
         },
-        _executeMethod: function(method){
+        _executeMethod: function (method) {
             var args = [];
 
-            for(var i=1; i< arguments.length; i++){
+            for (var i = 1; i < arguments.length; i++) {
                 args.push(arguments[i]);
             }
-            var request = this._getRequest(method,args),
-                deferred = $.rpc.Deferred();
+            var request = this._getRequest(method, args),
+                deferred = rpc.defer();
 
-            $.rpc.transportRegistry.match(request.transport).fire($.extend({}, request, {
-                success: function(results){
+            rpc.transportRegistry.match(request.transport).fire(rpc.extend({}, request, {
+                success: function (results) {
                     var r = request._envDef.deserialize.call(this, results);
                     if (r instanceof Error) {
                         deferred.resolve(r, null);
@@ -697,7 +839,7 @@
                         deferred.resolve(null, r);
                     }
                 },
-                error: function(jqXHR, textStatus, errorThrown){
+                error: function (jqXHR, textStatus, errorThrown) {
                     deferred.resolve(errorThrown, null);
                 }
             }));
@@ -708,164 +850,178 @@
     });
 
 
-    $.rpc.getTarget = function(smd, method){
-        var dest=smd._baseUrl;
-        if(smd.target){
-            dest = new $.rpc.Url(dest,smd.target) + '';
+    rpc.getTarget = function (smd, method) {
+        var dest = smd._baseUrl;
+        if (smd.target) {
+            dest = new rpc.Url(dest, smd.target) + '';
         }
-        if(method.target){
-            dest = new $.rpc.Url(dest,method.target) + '';
+        if (method.target) {
+            dest = new rpc.Url(dest, method.target) + '';
         }
         return dest;
     };
 
-    $.rpc.toOrdered=function(parameters, args){
-        if($.type(args)==='array'){ return args; }
-        var data=[];
-        for(var i=0;i<parameters.length;i++){
+    rpc.toOrdered = function (parameters, args) {
+        if (rpc.type(args) === 'array') {
+            return args;
+        }
+        var data = [];
+        for (var i = 0; i < parameters.length; i++) {
             data.push(args[parameters[i].name]);
         }
         return data;
     };
 
-    $.rpc.transportRegistry = new $.rpc.AdapterRegistry(true);
-    $.rpc.envelopeRegistry = new $.rpc.AdapterRegistry(true);
+    rpc.transportRegistry = new rpc.AdapterRegistry(true);
+    rpc.envelopeRegistry = new rpc.AdapterRegistry(true);
     //Built In Envelopes
 
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "URL",
-        function(str){ return str == "URL"; },
+        function (str) {
+            return str == "URL";
+        },
         {
-            serialize:function(smd, method, data ){
-                var d = $.param(data);
+            serialize: function (smd, method, data) {
+                var d = rpc.param(data);
                 return {
                     data: d,
-                    transport:"POST"
+                    transport: "POST"
                 };
             },
-            deserialize:function(results){
+            deserialize: function (results) {
                 return results;
             },
             namedParams: true
         }
     );
 
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "JSON",
-        function(str){ return str == "JSON"; },
+        function (str) {
+            return str == "JSON";
+        },
         {
-            serialize: function(smd, method, data){
-                var d = $.rpc.toJson(data);
+            serialize: function (smd, method, data) {
+                var d = rpc.toJson(data);
 
                 return {
                     data: d,
                     dataType: 'json',
-                    contentType : 'application/json; charset=utf-8'
+                    contentType: 'application/json; charset=utf-8'
                 };
             },
-            deserialize: function(results){
+            deserialize: function (results) {
                 return results;
             }
         }
     );
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "PATH",
-        function(str){ return str == "PATH"; },
+        function (str) {
+            return str == "PATH";
+        },
         {
-            serialize:function(smd, method, data){
+            serialize: function (smd, method, data) {
                 var i;
-                var target = $.rpc.getTarget(smd, method);
-                if($.type(data)==='array'){
-                    for(i = 0; i < data.length;i++){
+                var target = rpc.getTarget(smd, method);
+                if (rpc.type(data) === 'array') {
+                    for (i = 0; i < data.length; i++) {
                         target += '/' + data[i];
                     }
-                }else{
-                    for(i in data){
+                } else {
+                    for (i in data) {
                         target += '/' + i + '/' + data[i];
                     }
                 }
 
                 return {
-                    data:'',
+                    data: '',
                     target: target
                 };
             },
-            deserialize:function(results){
+            deserialize: function (results) {
                 return results;
             }
         }
     );
 
     //post is registered first because it is the default;
-    $.rpc.transportRegistry.register(
+    rpc.transportRegistry.register(
         "POST",
-        function(str){ return str == "POST"; },
+        function (str) {
+            return str == "POST";
+        },
         {
-            fire:function(r){
+            fire: function (r) {
                 r.url = r.target;
-                r.type="POST";
-                return $.ajax(r);
+                r.type = "POST";
+                return rpc.ajax(r);
             }
         }
     );
 
-    $.rpc.transportRegistry.register(
+    rpc.transportRegistry.register(
         "GET",
-        function(str){ return str == "GET"; },
+        function (str) {
+            return str == "GET";
+        },
         {
-            fire: function(r){
-                r.url=  r.target + (r.data ? '?' + ((r.rpcObjectParamName) ? r.rpcObjectParamName + '=' : '') + r.data : '');
-                r.type="GET";
+            fire: function (r) {
+                r.url = r.target + (r.data ? '?' + ((r.rpcObjectParamName) ? r.rpcObjectParamName + '=' : '') + r.data : '');
+                r.type = "GET";
                 r.data = '';
-                return $.ajax(r);
+                return rpc.ajax(r);
             }
         }
     );
 
 
     //only works ifyou include dojo.io.script
-    $.rpc.transportRegistry.register(
+    rpc.transportRegistry.register(
         "JSONP",
-        function(str){ return str == "JSONP"; },
+        function (str) {
+            return str == "JSONP";
+        },
         {
-            fire: function(r){
+            fire: function (r) {
                 r.url = r.target + ((r.target.indexOf("?") == -1) ? '?' : '&') + ((r.rpcObjectParamName) ? r.rpcObjectParamName + '=' : '') + r.data;
                 r.data = '';
                 r.dataType = "jsonp";
                 r.jsonp = r.callbackParamName || "callback";
-                return $.ajax(r);
+                return rpc.ajax(r);
             }
         }
     );
-    $.rpc.Service._nextId = 1;
+    rpc.Service._nextId = 1;
 
-    $.rpc.service = function(smd, options) {
+    rpc.service = function (smd, options) {
         return new Service(smd, options);
     };
 
-})( $ );
-(function($) {
+})(rpc);
+(function(rpc) {
 // Note: This doesn't require dojox.rpc.Service, and if you want it you must require it
 // yourself, and you must load it prior to dojox.rpc.Rest.
 
 //    dojo.getObject("rpc.Rest", true, dojox);
 
-    if ($.rpc && $.rpc.transportRegistry) {
+    if (rpc && rpc.transportRegistry) {
         // register it as an RPC service if the registry is available
-        $.rpc.transportRegistry.register(
+        rpc.transportRegistry.register(
             "REST",
             function (str) {
                 return str == "REST";
             },
             {
                 getExecutor: function (func, method, svc) {
-                    return new $.rpc.Rest(
+                    return new rpc.Rest(
                         method.name,
                         (method.contentType || svc._smd.contentType || "").match(/json|javascript/), // isJson
                         null,
                         function (id, args) {
                             var request = svc._getRequest(method, []);
-                            request.url = request.target + (id ? '?' + $.param(id) : '');
+                            request.url = request.target + (id ? '?' + rpc.param(id) : '');
                             if (args && (args.start >= 0 || args.count >= 0)) {
                                 request.headers = request.headers || {};
                                 request.headers.Range = "items=" + (args.start || '0') + '-' +
@@ -882,7 +1038,7 @@
     var drr;
 
     function index(method, request, service, range, id) {
-        var d = $.rpc.Deferred(),
+        var d = rpc.defer(),
             o = {
                 type: method,
                 success: function(data, textStatus, jqXHR) {
@@ -897,11 +1053,11 @@
                     d.resolve(errorThrown, null);
                 }
             };
-        $.ajax($.extend(o, request));
+        rpc.ajax(rpc.extend(o, request));
         return d;
     }
 
-    drr = $.rpc.Rest = function (/*String*/path, /*Boolean?*/isJson, /*Object?*/schema, /*Function?*/getRequest) {
+    drr = rpc.Rest = function (/*String*/path, /*Boolean?*/isJson, /*Object?*/schema, /*Function?*/getRequest) {
         // summary:
         //		This provides a HTTP REST service with full range REST verbs include PUT,POST, and DELETE.
         // description:
@@ -932,14 +1088,14 @@
         //		This can be overriden to take advantage of more complex referencing/indexing
         //		schemes
         service.cache = {
-            serialize: isJson ? $.rpc.toJson : function (result) {
+            serialize: isJson ? rpc.toJson : function (result) {
                 return result;
             }
         };
         // the default XHR args creator:
         service._getRequest = getRequest || function (id, args) {
-            if ($.isPlainObject(id)) {
-                id = $.param(id);
+            if (rpc.isPlainObject(id)) {
+                id = rpc.param(id);
                 id = id ? "?" + id : "";
             }
             if (args && args.sort && !args.queryStr) {
@@ -954,7 +1110,7 @@
                 url: path + (id === null ? "" : id),
                 dataType: isJson ? 'json' : 'text',
                 contentType: isJson ? 'application/json' : 'text/plain',
-                async: $.rpc.async,
+                async: rpc.async,
                 headers: {
                     Accept: isJson ? 'application/json,application/javascript' : '*/*'
                 }
@@ -964,7 +1120,7 @@
                     (("count" in args && args.count != Infinity) ?
                         (args.count + (args.start || 0) - 1) : '');
             }
-//            $.rpc.async = true;
+//            rpc.async = true;
             return request;
         };
         // each calls the event handler
@@ -999,9 +1155,9 @@
     };
 
     return drr;
-})($);
+})(rpc);
 
-(function( $ ) {
+(function(rpc) {
 
     function jsonRpcEnvelope(version){
         return {
@@ -1018,7 +1174,7 @@
                     d.jsonrpc = version;
                 }
                 return {
-                    data: $.rpc.toJson(d),
+                    data: rpc.toJson(d),
                     dataType:'json',
                     contentType: 'application/json; charset=utf-8',
                     transport:"POST"
@@ -1035,19 +1191,19 @@
             }
         };
     }
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "JSON-RPC-1.0",
         function(str){
             return str == "JSON-RPC-1.0";
         },
-        $.extend({namedParams:false}, jsonRpcEnvelope()) // 1.0 will only work with ordered params
+        rpc.extend({namedParams:false}, jsonRpcEnvelope()) // 1.0 will only work with ordered params
     );
 
-    $.rpc.envelopeRegistry.register(
+    rpc.envelopeRegistry.register(
         "JSON-RPC-2.0",
         function(str){
             return str == "JSON-RPC-2.0";
         },
         jsonRpcEnvelope("2.0")
     );
-})( $ );
+})(rpc);

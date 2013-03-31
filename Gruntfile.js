@@ -1,5 +1,14 @@
 module.exports = function(grunt) {
 
+    var src = [
+            'src/rpc.js',
+            'src/rpc.json.js',
+            'src/rpc.deferred.js',
+            'src/rpc.service.js',
+            'src/rpc.rest.js',
+            'src/rpc.jsonrpc.js'
+        ];
+
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         clean: {
@@ -10,15 +19,16 @@ module.exports = function(grunt) {
                 separator: '\n'
             },
             dist: {
-                src: [
-                    'src/rpc.js',
-                    'src/rpc.json.js',
-                    'src/rpc.deferred.js',
-                    'src/rpc.service.js',
-                    'src/rpc.rest.js',
-                    'src/rpc.jsonrpc.js'
-                ],
+                src: src,
                 dest: 'dist/<%= pkg.name %>.js'
+            }
+        },
+        copy: {
+            main: {
+                files: [
+                    {src: ['SMDLibrary/*'], dest: 'dist/'},
+                    {src: ['src/adapters/*'], dest: 'dist/', flatten: true, expand: true}
+                ]
             }
         },
         uglify: {
@@ -51,13 +61,6 @@ module.exports = function(grunt) {
         watch: {
             files: ['<%= jshint.files %>'],
             tasks: ['jshint', 'qunit']
-        },
-        copy: {
-            main: {
-                files: [
-                    {src: ['SMDLibrary/*'], dest: 'dist/'}
-                ]
-            }
         }
     });
 
@@ -84,10 +87,7 @@ module.exports = function(grunt) {
             " Licensed <%= _.pluck(pkg.licenses, 'type').join(', ') %> */\n";
     }
 
-
-
     grunt.registerTask('test', ['jshint']);
-
     grunt.registerTask('default', ['clean', 'jshint', 'concat', 'uglify', 'copy']);
 
 };
