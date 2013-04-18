@@ -2,7 +2,7 @@
     "name": "rpc",
     "title": "Zeptor/jQuery RPC",
     "description": "A Zeptor/jQuery plugin that offers methods to communicate via Remote Procedure Calls (RPC) with Backend Servers.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "homepage": "https://github.com/torworx/rpc",
     "author": {
         "name": "Tao Yuan"

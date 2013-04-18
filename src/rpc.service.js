@@ -36,7 +36,7 @@
                     async: false,
                     success: function (data) {
                         // SMD format is not strict.
-                        processSmd(rpc.fromJson(data));
+                        processSmd(rpc.type(data) === 'string' ? rpc.fromJson(data) : data);
                     },
                     error: function (err, textStatus, errorThrown) {
                         throw errorThrown;
